@@ -1,0 +1,27 @@
+name: Download Artifact
+description: Downloads Artifacts
+inputs:
+  github_token:
+    description: GitHub token
+    required: false
+    default: ${{ github.token }}
+  name:
+    description: The artifact name
+    required: true
+  branch:
+    description: The branch name to find the latest run
+    required: true
+  workflow:
+    description: The name of the workflow to find the latest run
+    required: true
+    default: build.yml
+runs:
+  using: "composite"
+  steps:
+    - name: Download Artifact
+      shell: pwsh
+      run: |
+        $branch = "${{ inputs.branch }}".Replace("refs/heads/", "")
+        echo "${{ inputs.github_token }}" | gh auth login --with-token
+        $run_id = $(gh api "repos/${{ github.repository }}/actions/workflows/${{ inputs.workflow }}/runs?branch=${{ inputs.branch }}&per_page=1" --jq ".workflow_runs.[].id")
+        $(gh run download --repo "${{ github.repository }}" $run_id -n "${{ inputs.name }}")
